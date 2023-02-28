@@ -1,0 +1,113 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <script type="text/javascript">
+        window.onload = function() {
+            var dps = []; //dataPoints. 
+
+            var chart = new CanvasJS.Chart("chartContainer", {
+				exportEnabled: true,
+
+                title: {
+                    text: "Accepting DataPoints from User Input"
+                },
+                data: [{
+                    type: "line",
+                    dataPoints: dps
+                }]
+            });
+
+            function addDataPointsAndRender() {
+                xValue = Number(document.getElementById("xValue").value);
+                yValue = Number(document.getElementById("yValue").value);
+                dps.push({
+                    x: xValue,
+                    y: yValue
+                });
+                console.log(dps);
+                chart.render();
+            }
+
+            var renderButton = document.getElementById("renderButton");
+            renderButton.addEventListener("click", addDataPointsAndRender);
+            
+            //------------------------------------------------------------------------------------
+			//Load Doc Data from Database
+			function loadDoc() {
+				const xhttp = new XMLHttpRequest();
+				xhttp.onload = function () {
+					var data = JSON.parse(this.responseText);
+					console.log(data);
+					for (var i = 0; i < data.length; i++) {
+						var value = data[i].wertx;
+						var value = data[i].werty;
+						var exists = false;
+						for (var j = 0; j < dps.length; j++) {
+							if (dps[j].wertx === wertx) {
+								exists = true;
+								break;
+							}
+						}
+						if (!exists) {
+							dps.push({
+								x: value,
+								y: value
+							});
+						}
+					}
+					chart.render();
+				}
+				xhttp.open("GET", "/api/Linechart");
+				xhttp.send();
+			}
+
+
+			var loadDocButton = document.getElementById("loadDoc");
+			loadDocButton.addEventListener("click", loadDoc);
+
+
+			//------------------------------------------------------------------------------------
+			function sendDataPoints() {
+				var xhr = new XMLHttpRequest();
+				var xValue = document.getElementById("xValue").value;
+				var yValue = document.getElementById("yValue").value;
+				var data = {
+					wertx: xValue,
+					werty: yValue
+				};
+				xhr.open("POST", "/api/Linechart");
+				xhr.setRequestHeader("Content-Type", "application/json");
+				xhr.send(JSON.stringify(data));
+				xhr.onload = function () {
+					if (xhr.status === 200) {
+						console.log("Data sent successfully");
+					} else {
+						console.log("Error sending data");
+					}
+				};
+			}
+
+			var sendDataButton = document.getElementById("sendDataButton");
+			sendDataButton.addEventListener("click", sendDataPoints);
+			//------------------------------------------------------------------------------------
+			
+            
+        }
+    </script>
+    <script src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
+</head>
+
+<body>
+    X Value:
+    <input id="xValue" type="number" step="any" placeholder="Enter X-Value"> 
+    Y Value:
+    <input id="yValue" type="number" step="any" placeholder="Enter Y-Value">
+    <button id="renderButton">Add DataPoint & Render</button>
+	<button id="sendDataButton">POST Graph</button>
+	<button id="loadDoc">GET Graph</button>
+    <div id="chartContainer" style="height: 270px; width: 100%;">
+    </div>
+</body>
+
+</html>
